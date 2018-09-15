@@ -24,26 +24,22 @@ X = tf.placeholder(tf.float32)
 Y = tf.placeholder(tf.float32)
 
 # 신경망은 2차원으로 [입력층(특성), 출력층(레이블)] -> [2, 3] 으로 정합니다.
-W1 = tf.Variable(tf.random_uniform([2,10],-1,1))
-W2 = tf.Variable(tf.random_uniform([10,3],-1,1))
+W = tf.Variable(tf.random_uniform([2, 3], -1., 1.))
 
 # 편향을 각각 각 레이어의 아웃풋 갯수로 설정합니다.
 # 편향은 아웃풋의 갯수, 즉 최종 결과값의 분류 갯수인 3으로 설정합니다.
-b1 = tf.Variable(tf.zeros([10]))
-b2 = tf.Variable(tf.zeros([3]))
+b = tf.Variable(tf.zeros([3]))
 
 # 신경망에 가중치 W과 편향 b을 적용합니다
-L1 = tf.matmul(X,W1) + b1
-
+L = tf.add(tf.matmul(X, W), b)
 # 가중치와 편향을 이용해 계산한 결과 값에
 # 텐서플로우에서 기본적으로 제공하는 활성화 함수인 ReLU 함수를 적용합니다.
-L1 = tf.nn.relu(L1)
-
-model = tf.matmul(L1,W2) + b2
+L = tf.nn.relu(L)
 
 # 마지막으로 softmax 함수를 이용하여 출력값을 사용하기 쉽게 만듭니다
 # softmax 함수는 다음처럼 결과값을 전체합이 1인 확률로 만들어주는 함수입니다.
 # 예) [8.04, 2.76, -6.52] -> [0.53 0.24 0.23]
+model = tf.nn.softmax(L)
 
 # 신경망을 최적화하기 위한 비용 함수를 작성합니다.
 # 각 개별 결과에 대한 합을 구한 뒤 평균을 내는 방식을 사용합니다.
@@ -54,21 +50,25 @@ model = tf.matmul(L1,W2) + b2
 #     [0 1 0]]  [0.2 0.8 0.0]]     [ 0   -0.09 0]]
 # 즉, 이것은 예측값과 실제값 사이의 확률 분포의 차이를 비용으로 계산한 것이며,
 # 이것을 Cross-Entropy 라고 합니다.
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=Y, logits=model))
-optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
-train_op = optimizer.minimize(cost)
+cost = tf.reduce_mean(-tf.reduce_sum(Y * tf.log(model), axis=1))
 
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01)
+train_op = optimizer.minimize(cost)
 
 
 #########
 # 신경망 모델 학습
 ######
+init = tf.global_variables_initializer()
 sess = tf.Session()
-sess.run(tf.global_variables_initializer())
+sess.run(init)
 
 for step in range(100):
-    _,cost_val = sess.run([train_op, cost],feed_dict={X: x_data, Y: y_data})
-    print(step, cost_val)
+    sess.run(train_op, feed_dict={X: x_data, Y: y_data})
+
+    if (step + 1) % 10 == 0:
+        print(step + 1, sess.run(cost, feed_dict={X: x_data, Y: y_data}))
+
 
 #########
 # 결과 확인
@@ -77,13 +77,11 @@ for step in range(100):
 # tf.argmax: 예측값과 실제값의 행렬에서 tf.argmax 를 이용해 가장 큰 값을 가져옵니다.
 # 예) [[0 1 0] [1 0 0]] -> [1 0]
 #    [[0.2 0.7 0.1] [0.9 0.1 0.]] -> [1 0]
+prediction = tf.argmax(model, 1)
+target = tf.argmax(Y, 1)
+print('예측값:', sess.run(prediction, feed_dict={X: x_data}))
+print('실제값:', sess.run(target, feed_dict={Y: y_data}))
 
-prediction = tf.argmax(model,1)
-print(sess.run(prediction, feed_dict={X: x_data}))
-target = tf.argmax(y_data,1)
-print(sess.run(target))
-
-isequal = tf.equal(prediction, target)
-accuracy = tf.reduce_mean(tf.cast(isequal,tf.float32))
-print("accuracy = %.2f %%" %sess.run(accuracy*100, feed_dict={X: x_data}))
-
+is_correct = tf.equal(prediction, target)
+accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
+print('정확도: %.2f' % sess.run(accuracy * 100, feed_dict={X: x_data, Y: y_data}))
