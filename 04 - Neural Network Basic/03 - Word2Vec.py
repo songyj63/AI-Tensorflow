@@ -5,26 +5,41 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # matplot 에서 한글을 표시하기 위한 설정
-font_name = matplotlib.font_manager.FontProperties(
-                fname="/Library/Fonts/NanumGothic.otf"  # 한글 폰트 위치를 넣어주세요
-            ).get_name()
-matplotlib.rc('font', family=font_name)
+# font_name = matplotlib.font_manager.FontProperties(
+#                 fname="/Library/Fonts/NanumGothic.otf"  # 한글 폰트 위치를 넣어주세요
+#             ).get_name()
+# matplotlib.rc('font', family=font_name)
 
 # 단어 벡터를 분석해볼 임의의 문장들
-sentences = ["나 고양이 좋다",
-             "나 강아지 좋다",
-             "나 동물 좋다",
-             "강아지 고양이 동물",
-             "여자친구 고양이 강아지 좋다",
-             "고양이 생선 우유 좋다",
-             "강아지 생선 싫다 우유 좋다",
-             "강아지 고양이 눈 좋다",
-             "나 여자친구 좋다",
-             "여자친구 나 싫다",
-             "여자친구 나 영화 책 음악 좋다",
-             "나 게임 만화 애니 좋다",
-             "고양이 강아지 싫다",
-             "강아지 고양이 좋다"]
+# sentences = ["나 고양이 좋다",
+#              "나 강아지 좋다",
+#              "나 동물 좋다",
+#              "강아지 고양이 동물",
+#              "여자친구 고양이 강아지 좋다",
+#              "고양이 생선 우유 좋다",
+#              "강아지 생선 싫다 우유 좋다",
+#              "강아지 고양이 눈 좋다",
+#              "나 여자친구 좋다",
+#              "여자친구 나 싫다",
+#              "여자친구 나 영화 책 음악 좋다",
+#              "나 게임 만화 애니 좋다",
+#              "고양이 강아지 싫다",
+#              "강아지 고양이 좋다"]
+
+sentences = ["I like cat",
+             "I like dog",
+             "I like animal",
+             "dog cat animal",
+             "girlfriend cat dog like",
+             "cat fish milk like",
+             "dog cat hate milk like",
+             "dog cat snow like",
+             "I girlfriend like",
+             "girlfriend I hate",
+             "girlfriend I movie book music like",
+             "I game animation comic like",
+             "cat dog hate",
+             "dog cat like"]
 
 # 문장을 전부 합친 후 공백으로 단어들을 나누고 고유한 단어들로 리스트를 만듭니다.
 word_sequence = " ".join(sentences).split()
