@@ -1,89 +1,47 @@
-# 털과 날개가 있는지 없는지에 따라, 포유류인지 조류인지 분류하는 신경망 모델을 만들어봅니다.
 import tensorflow as tf
-import numpy as np
+from tensorflow.examples.tutorials.mnist import input_data
 
-# [털, 날개]
-x_data = np.array(
-    [[0, 0], [1, 0], [1, 1], [0, 0], [0, 0], [0, 1]])
+mnist = input_data.read_data_sets("./06 - MNIST/mnist/data/", one_hot=True)
 
-# [기타, 포유류, 조류]
-# 다음과 같은 형식을 one-hot 형식의 데이터라고 합니다.
-y_data = np.array([
-    [1, 0, 0],  # 기타
-    [0, 1, 0],  # 포유류
-    [0, 0, 1],  # 조류
-    [1, 0, 0],
-    [1, 0, 0],
-    [0, 0, 1]
-])
+X = tf.placeholder(tf.float32, [None, 784])
+Y = tf.placeholder(tf.float32, [None, 10])
 
-#########
-# 신경망 모델 구성
-######
-X = tf.placeholder(tf.float32)
-Y = tf.placeholder(tf.float32)
+W1 = tf.Variable(tf.random_normal([784, 256], stddev=0.01))
+b1 = tf.Variable(tf.random_normal([1, 256], stddev=0.01))
+L1 = tf.nn.relu(tf.matmul(X, W1) + b1)
 
-# 신경망은 2차원으로 [입력층(특성), 출력층(레이블)] -> [2, 3] 으로 정합니다.
-W1 = tf.Variable(tf.random_uniform([2,10],-1,1))
-W2 = tf.Variable(tf.random_uniform([10,3],-1,1))
+W2 = tf.Variable(tf.random_normal([256, 256], stddev=0.01))
+b2 = tf.Variable(tf.random_normal([1, 256], stddev=0.01))
+L2 = tf.nn.relu(tf.matmul(L1, W2) + b2)
 
-# 편향을 각각 각 레이어의 아웃풋 갯수로 설정합니다.
-# 편향은 아웃풋의 갯수, 즉 최종 결과값의 분류 갯수인 3으로 설정합니다.
-b1 = tf.Variable(tf.zeros([10]))
-b2 = tf.Variable(tf.zeros([3]))
+W3 = tf.Variable(tf.random_normal([256, 10], stddev=0.01))
+b3 = tf.Variable(tf.random_normal([1, 10], stddev=0.01))
+model = tf.matmul(L2, W3) + b3
 
-# 신경망에 가중치 W과 편향 b을 적용합니다
-L1 = tf.matmul(X,W1) + b1
-
-# 가중치와 편향을 이용해 계산한 결과 값에
-# 텐서플로우에서 기본적으로 제공하는 활성화 함수인 ReLU 함수를 적용합니다.
-L1 = tf.nn.relu(L1)
-
-model = tf.matmul(L1,W2) + b2
-
-# 마지막으로 softmax 함수를 이용하여 출력값을 사용하기 쉽게 만듭니다
-# softmax 함수는 다음처럼 결과값을 전체합이 1인 확률로 만들어주는 함수입니다.
-# 예) [8.04, 2.76, -6.52] -> [0.53 0.24 0.23]
-
-# 신경망을 최적화하기 위한 비용 함수를 작성합니다.
-# 각 개별 결과에 대한 합을 구한 뒤 평균을 내는 방식을 사용합니다.
-# 전체 합이 아닌, 개별 결과를 구한 뒤 평균을 내는 방식을 사용하기 위해 axis 옵션을 사용합니다.
-# axis 옵션이 없으면 -1.09 처럼 총합인 스칼라값으로 출력됩니다.
-#        Y         model         Y * tf.log(model)   reduce_sum(axis=1)
-# 예) [[1 0 0]  [[0.1 0.7 0.2]  -> [[-1.0  0    0]  -> [-1.0, -0.09]
-#     [0 1 0]]  [0.2 0.8 0.0]]     [ 0   -0.09 0]]
-# 즉, 이것은 예측값과 실제값 사이의 확률 분포의 차이를 비용으로 계산한 것이며,
-# 이것을 Cross-Entropy 라고 합니다.
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=Y, logits=model))
-optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
+optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
 train_op = optimizer.minimize(cost)
 
-
-
-#########
-# 신경망 모델 학습
-######
+init = tf.global_variables_initializer()
 sess = tf.Session()
-sess.run(tf.global_variables_initializer())
+sess.run(init)
 
-for step in range(100):
-    _,cost_val = sess.run([train_op, cost],feed_dict={X: x_data, Y: y_data})
-    print(step, cost_val)
+batch_size = 100
+total_batch = int(mnist.train.num_examples / batch_size)
 
-#########
-# 결과 확인
-# 0: 기타 1: 포유류, 2: 조류
-######
-# tf.argmax: 예측값과 실제값의 행렬에서 tf.argmax 를 이용해 가장 큰 값을 가져옵니다.
-# 예) [[0 1 0] [1 0 0]] -> [1 0]
-#    [[0.2 0.7 0.1] [0.9 0.1 0.]] -> [1 0]
+for epoch in range(15):
+    total_cost = 0
 
-prediction = tf.argmax(model,1)
-print(sess.run(prediction, feed_dict={X: x_data}))
-target = tf.argmax(y_data,1)
-print(sess.run(target))
+    for i in range(total_batch):
+        batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+        _, cost_val = sess.run([train_op, cost], feed_dict={X: batch_xs, Y: batch_ys})
 
-isequal = tf.equal(prediction, target)
-accuracy = tf.reduce_mean(tf.cast(isequal,tf.float32))
-print("accuracy = %.2f %%" %sess.run(accuracy*100, feed_dict={X: x_data}))
+        total_cost += cost_val
 
+    print('Epoch: %04d' % (epoch + 1), 'Avg. cost = {:.3f}'.format(total_cost / total_batch))
+
+
+is_correct = tf.equal(tf.argmax(model, 1), tf.argmax(Y, 1))
+accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))*100
+
+print('정확도: %.2f %%' %sess.run(accuracy, feed_dict={X: mnist.test.images, Y: mnist.test.labels}))
