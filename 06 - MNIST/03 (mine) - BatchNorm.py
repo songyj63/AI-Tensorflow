@@ -1,9 +1,7 @@
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
-import matplotlib.pyplot as plt
-import numpy as np
 
-mnist = input_data.read_data_sets("./06 - MNIST/mnist/data/", one_hot=True)
+mnist = input_data.read_data_sets("./mnist/data/", one_hot=True)
 
 X = tf.placeholder(tf.float32, [None, 784])
 Y = tf.placeholder(tf.float32, [None, 10])
@@ -37,7 +35,7 @@ sess.run(init)
 batch_size = 100
 total_batch = int(mnist.train.num_examples / batch_size)
 
-for epoch in range(15):
+for epoch in range(30):
     total_cost = 0
 
     for i in range(total_batch):
@@ -53,16 +51,3 @@ is_correct = tf.equal(tf.argmax(model, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))*100
 
 print('정확도: %.2f %%' %sess.run(accuracy, feed_dict={X: mnist.test.images, Y: mnist.test.labels, is_training: False}))
-
-labels = sess.run(model, feed_dict={X: mnist.test.images,
-                                    Y: mnist.test.labels,
-                                    is_training: False})
-
-fig = plt.figure()
-
-for i in range(10):
-    subplot = fig.add_subplot(2, 5, i+1)
-    subplot.set_title('%d' % np.argmax(labels[i]))
-    subplot.imshow(mnist.test.images[i].reshape((28, 28)), cmap=plt.cm.gray_r)
-
-plt.show()
