@@ -63,7 +63,7 @@ sess.run(init)
 batch_size = 100
 total_batch = int(mnist.train.num_examples / batch_size)
 
-for epoch in range(1):
+for epoch in range(15):
     total_cost = 0
 
     for i in range(total_batch):
@@ -85,7 +85,6 @@ print('최적화 완료!')
 
 #########
 # 결과 확인
-# GPU 리소스 부족으로 ResourceExhaustedError 출력시 테스트도 배치 나눠줘야함
 ######
 is_correct = tf.equal(tf.argmax(model, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
@@ -104,5 +103,5 @@ for i in range(total_batch_test):
                                    Y: batch_y_test,
                                    keep_prob: 1}), 'total_acc: %.2f' %total_acc)
 
-total_acc = total_acc / total_batch_test
+total_acc = total_acc / total_batch_test * 100
 print('최종 정확도: %.2f' %total_acc)
