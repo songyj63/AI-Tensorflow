@@ -13,18 +13,9 @@ X = tf.placeholder(tf.float32, [None, 28, 28, 1])
 Y = tf.placeholder(tf.float32, [None, 10])
 keep_prob = tf.placeholder(tf.float32)
 
-# 각각의 변수와 레이어는 다음과 같은 형태로 구성됩니다.
-# W1 [3 3 1 32] -> [3 3]: 커널 크기, 1: 입력값 X 의 특성수, 32: 필터 갯수
-# L1 Conv shape=(?, 28, 28, 32)
-#    Pool     ->(?, 14, 14, 32)
-W1 = tf.Variable(tf.random_normal([3, 3, 1, 32], stddev=0.01))
-# tf.nn.conv2d 를 이용해 한칸씩 움직이는 컨볼루션 레이어를 쉽게 만들 수 있습니다.
-# padding='SAME' 은 커널 슬라이딩시 최외곽에서 한칸 밖으로 더 움직이는 옵션
-L1 = tf.nn.conv2d(X, W1, strides=[1, 1, 1, 1], padding='SAME')
-L1 = tf.nn.relu(L1)
-# Pooling 역시 tf.nn.max_pool 을 이용하여 쉽게 구성할 수 있습니다.
-L1 = tf.nn.max_pool(L1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-# L1 = tf.nn.dropout(L1, keep_prob)
+
+L1 = tf.layers.conv2d(X, 32, [3, 3], activation=tf.nn.relu, padding='SAME')
+L1 = tf.layers.max_pooling2d(L1, [2, 2], [2, 2], padding='SAME')
 
 # L2 Conv shape=(?, 14, 14, 64)
 #    Pool     ->(?, 7, 7, 64)
@@ -34,6 +25,8 @@ L2 = tf.nn.conv2d(L1, W2, strides=[1, 1, 1, 1], padding='SAME')
 L2 = tf.nn.relu(L2)
 L2 = tf.nn.max_pool(L2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 # L2 = tf.nn.dropout(L2, keep_prob)
+
+L2 = tf.layers.conv2d(L1, 64)
 
 # FC 레이어: 입력값 7x7x64 -> 출력값 256
 # Full connect를 위해 직전의 Pool 사이즈인 (?, 7, 7, 64) 를 참고하여 차원을 줄여줍니다.
